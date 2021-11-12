@@ -9,15 +9,13 @@
 #include <netdb.h>
 #include "comunication.h"
 
-typedef struct players_info{
+typedef struct players_sockets{
   int socket_c1;
   int socket_c2;
   int socket_c3;
   int socket_c4;
-} PlayersInfo;
+} PlayersSockets;
 
 
-
-PlayersInfo * prepare_sockets_and_get_clients(char * IP, int port);
 int prepare_socket(char * IP, int PORT);
 int get_clients(int server_socket);

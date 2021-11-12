@@ -36,15 +36,24 @@ int main (int argc, char *argv[]){
       printf("------------------\n");
       free(message);
 
-      //printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
-      // int option = getchar() - '0';
-      // getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
-      
+      printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
+      int option = getchar() - '0';
+      getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
+      printf("------------------\n");
       // printf("Ingrese su mensaje: ");
       // char * response = get_input();
       
 
       // client_send_message(server_socket, option, response);
+    }
+    if (msg_code == 13) { //Recibimos un mensaje del servidor
+      char * message = client_receive_payload(server_socket);
+      printf("%s", message);
+      printf("------------------\n");
+      free(message);
+
+      
+      
     }
 
     if (msg_code == 2) { //Recibimos un mensaje que proviene del otro cliente
