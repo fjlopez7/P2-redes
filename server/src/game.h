@@ -12,7 +12,13 @@ typedef struct player_info{
   int niv_ing;
   int niv_gue;  
 
+  int aldeanos_initial;
+
   int comida;
   int oro;
   int ciencia;
+  int socket;
 } PlayerInfo;
+
+
+PlayerInfo** init_all_player_info();

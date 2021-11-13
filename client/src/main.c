@@ -25,52 +25,85 @@ int main (int argc, char *argv[]){
   printf("Conectando al servidor de IkaRuz\n");
   // Se prepara el socket
   int server_socket = prepare_socket(IP, PORT);
-
+  
   // Se inicializa un loop para recibir todo tipo de paquetes y tomar una acción al respecto
   while (1){
     int msg_code = client_receive_id(server_socket);
     
-    if (msg_code == 1) { //Recibimos un mensaje del servidor
+    if (msg_code == 1) { 
       char * message = client_receive_payload(server_socket);
       printf("%s", message);
       printf("------------------\n");
       free(message);
 
-      printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
-      int option = getchar() - '0';
-      getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
-      printf("------------------\n");
-      // printf("Ingrese su mensaje: ");
-      // char * response = get_input();
-      
-
-      // client_send_message(server_socket, option, response);
-    }
-    if (msg_code == 13) { //Recibimos un mensaje del servidor
-      char * message = client_receive_payload(server_socket);
-      printf("%s", message);
-      printf("------------------\n");
-      free(message);
-
-      
-      
-    }
-
-    if (msg_code == 2) { //Recibimos un mensaje que proviene del otro cliente
-      char * message = client_receive_payload(server_socket);
-      printf("El otro cliente dice: %s\n", message);
-      free(message);
-
-      printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
-      int option = getchar() - '0';
-      getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
-      
-      printf("Ingrese su mensaje: ");
+      printf("Ingresa tu nombre:\n");
       char * response = get_input();
-
-      client_send_message(server_socket, option, response);
+      printf("------------------\n");
+      client_send_message(server_socket, 1, response);
     }
-    //printf("------------------\n");
+    if (msg_code == 2) { 
+      char * message = client_receive_payload(server_socket);
+      free(message);
+      
+     
+      // printf("Posees 9 aldeanos y debes repartirlo en las 4 clases.\n");
+      // printf("Número de agricultores:\n");
+      // char * agr_s =  get_input();
+      
+      // int agr = agr_s[0] - '0';
+      // printf("aledeano %i", agr);
+      // printf("------------------ \n");
+      
+      // while (9< agr || 0>agr)
+      // {
+      //   printf("Ingresa un número válido.\n");
+      //   printf("Número de agricultores:\n");
+      //   agr = getchar() - '0';
+        
+      //   getchar();
+      //   printf("------------------\n");
+      // }
+      
+      // char buffer[2];
+      // sprintf(buffer, "%d", agr); 
+      // printf("here");
+
+      client_send_message(server_socket, 2, "1");
+      
+    }
+    if (msg_code == 3) { 
+      char * message = client_receive_payload(server_socket);
+      printf("mensaje: %s", message);
+      free(message);
+      
+     
+      // printf("Posees 9 aldeanos y debes repartirlo en las 4 clases.\n");
+      // printf("Número de agricultores:\n");
+      // char * agr_s =  get_input();
+      
+      // int agr = agr_s[0] - '0';
+      // printf("aledeano %i", agr);
+      // printf("------------------ \n");
+      
+      // while (9< agr || 0>agr)
+      // {
+      //   printf("Ingresa un número válido.\n");
+      //   printf("Número de agricultores:\n");
+      //   agr = getchar() - '0';
+        
+      //   getchar();
+      //   printf("------------------\n");
+      // }
+      
+      // char buffer[2];
+      // sprintf(buffer, "%d", agr); 
+      // printf("here");
+
+      
+      
+    }
+
+    
   }
 
   // Se cierra el socket
