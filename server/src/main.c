@@ -4,6 +4,7 @@
 #include "comunication.h"
 #include "conection.h"
 #include <pthread.h>
+#include "game.h"
 
 
 char * revert(char * message){
@@ -29,8 +30,10 @@ void * waiting_clients(void* server_socket){
   
   char mess[22];
   sprintf(mess, "Bienvenido jugador %d\n", jugador_actual);
+  PlayerInfo *player = init_player_info(jugador_actual);
+  printf("Jugador numero %i(funciona) %i\n", jugador_actual, player->player);
   server_send_message(client_socket, 1, mess);
-  //server_send_message(players_sockets->socket_c1, 13, "Un usuario se conecto a la partida\n");
+  server_send_message(players_sockets->socket_c1, 1, "Un usuario se conecto a la partida\n");
 }
 
 
@@ -49,6 +52,7 @@ int main(int argc, char *argv[]){
  
   char * welcome = "Bienvenido jugador 1!!\nAl ser el primer jugador, eres el líder del grupo \nAhora espera a 2 o más jugadores para empezar\n";
   server_send_message(players_sockets->socket_c1, 1, welcome);
+  printf("El jugador lider se ha conectado!\n");
   pthread_t thread2,thread3, thread4;
   int iret1 = pthread_create(&thread2, NULL, waiting_clients, (void*) s_socket);
   int iret2 = pthread_create(&thread3, NULL, waiting_clients, (void*) s_socket);

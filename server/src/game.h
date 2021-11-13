@@ -15,4 +15,7 @@ typedef struct player_info{
   int comida;
   int oro;
   int ciencia;
+  int estado; //onda decir si está habilitado para jugar o no (1 si, 0 no)
 } PlayerInfo;
+
+PlayerInfo *init_player_info(int jugador_actual); 
