@@ -52,8 +52,11 @@ int main(int argc, char *argv[]){
     int msg_code2 = -1;
     int msg_code3 = -1;
     int msg_code4 = -1;
+    
     if( jugador_actual == 2 ){
+      printf("entre a jugador actual == 2\n");
       msg_code2 = server_receive_id(players_sockets->socket_c2);
+      //printf("1) msg_code2: %i\n", msg_code2);
     }
 
     if( jugador_actual == 3 ){
@@ -66,11 +69,15 @@ int main(int argc, char *argv[]){
     if (msg_code1 == 1){
       char * nombre = server_receive_payload(players_sockets->socket_c1);
       strcpy(players_info[0]->name,nombre);
+      printf("El tipo 1 se llama: %s\n", nombre);
       server_send_message(players_sockets->socket_c1, 2, "ahhhh");
     }
+    printf("2) msg_code2: %i\n", msg_code2);
     if (msg_code2 == 1){
+      printf("el tipo2 llego al msg_code2==1\n");
       char * nombre = server_receive_payload(players_sockets->socket_c2);
       strcpy(players_info[1]->name,nombre);
+      printf("El tipo 2 se llama: %s\n", nombre);
       server_send_message(players_sockets->socket_c2, 2, "");
     }
     if (msg_code3 == 1){
@@ -84,15 +91,15 @@ int main(int argc, char *argv[]){
       server_send_message(players_sockets->socket_c4, 2, "");
     }
     if (msg_code1 == 2){
-      char * nombre = server_receive_payload(players_sockets->socket_c1);
-      
-      int agr = nombre[0] - '0';
+      char * cantidad= server_receive_payload(players_sockets->socket_c1);
+      //int agr = nombre[0] - '0';
+      printf("La persona 1 ingreso a susu aldeanos como: %s\n", cantidad);
       server_send_message(players_sockets->socket_c1, 3, "");
     }
     if (msg_code2 == 2){
-      char * agr_s = server_receive_payload(players_sockets->socket_c2);
-      
-      int agr = agr_s[0] - '0';
+      char * cantidad= server_receive_payload(players_sockets->socket_c1);
+      printf("La persona 1 ingreso a susu aldeanos como: %s\n", cantidad);
+      //int agr = agr_s[0] - '0';
       server_send_message(players_sockets->socket_c1, 3, "");
     }
     if (msg_code3 == 2){

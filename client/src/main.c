@@ -43,7 +43,14 @@ int main (int argc, char *argv[]){
     }
     if (msg_code == 2) { 
       char * message = client_receive_payload(server_socket);
+      printf("%s", message);
+      printf("------------------\n");
       free(message);
+
+      printf("Reparte tus 9 aldeanos en los 4 roles Agicultores-Mineros-Ingenieros-Guerreros:\n");
+      char * response2 = get_input();
+      printf("------------------\n");
+      client_send_message(server_socket, 2, response2);      
       
      
       // printf("Posees 9 aldeanos y debes repartirlo en las 4 clases.\n");
