@@ -3,204 +3,116 @@
 #include <stdlib.h>
 #include "comunication.h"
 #include "conection.h"
-#include "game.h"
 #include <pthread.h>
-#include <string.h>
+#include "game.h"
 
 
-// Código obtenido
-static _Atomic unsigned int cli_count = 0;
-
-pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static int uid = 0;
-
-char * IP;
-int PORT = 8080;
-int server_socket;
-int game_in_progress = 0;
-static _Atomic unsigned int jugadores_listos = 0;
-static _Atomic unsigned int jugadores_conectados = 0;
-static _Atomic unsigned int turno = -1;
-PlayerInfo* players_info[4];
-
-void queue_add(int socket_client){
-	pthread_mutex_lock(&clients_mutex);
-  printf("socket_client: %i\n", socket_client);
-
-	for(int i=0; i < 4; ++i){
-		if(players_info[i]->uid == -1){
-			players_info[i] -> uid = uid++;
-      players_info[i] -> socket = socket_client;
-      jugadores_conectados++;
-			break;
-		}
-	}
+char * revert(char * message){
+  //Se invierte el mensaje
   
-	pthread_mutex_unlock(&clients_mutex);
-}
+  int len = strlen(message) + 1;
+  char * response = malloc(len);
 
-void *handle_client(void* player){
-	PlayerInfo* player_actual = player;
+  for (int i = 0; i < len-1; i++)
+  {
+    response[i] = message[len-2-i];
+  }
+  response[len-1] = '\0';
+  return response;
+}
+int jugador_actual = 1;
+//int = 0;
+//int = 0;
+//int = 0,
+PlayersSockets * players_sockets;
+void * waiting_clients(void* server_socket){
+  int server_socket1 = *((int *)server_socket);
+  int client_socket = get_clients(server_socket1);
+  
+  jugador_actual++;
+  
   char mess[22];
-  char mess1[29];
-  if (player_actual->uid==0){
-    sprintf(mess1, "Bienvenido jugador líder %d\n", player_actual->uid);
-    //printf("mi socket es: %i\n",players_info[player_actual->uid]->socket);
-  }else{
-    sprintf(mess1, "Bienvenido jugador %d\n", player_actual->uid);
-  }
-  server_send_message(player_actual->socket, 1, mess1);
-  
-	while(1){
-    int msg_code = server_receive_id(player_actual->socket);
-    if(turno == -1){
-      // Recibir nombre
-      if (msg_code == 1){
-        char * nombre = server_receive_payload(player_actual->socket);
-        //Dice en el server los jugadores conectados
-        if (strlen(nombre) > 0){
-          strcpy(players_info[player_actual->uid]->name,nombre);
-          //printf("El jugador %i se llama: %s\n",player_actual->uid,player_actual->name);
-          //Le avisa al lider los jugadores que se conectan
-          if (player_actual->uid > 0){
-            char mess2[90];
-            sprintf(mess2, "Se ha conectado el jugador: %s\n", player_actual->name);
-            server_send_message(players_info[0]->socket, 2, mess2);
-          }
-          server_send_message(player_actual->socket, 3, "");
-        }else{
-          server_send_message(player_actual->socket, 1, mess1);
-        }
-      }
-      // Recibir aldeanos
-      if (msg_code==3){
-        char * aldeanos = server_receive_payload(player_actual->socket);
-        if (strlen(aldeanos) < 4){
-          server_send_message(player_actual->socket, 2, "Recuerda las clases son 4\n");
-          server_send_message(player_actual->socket, 3, "");
-          continue;
-        }else{
-          int agr = aldeanos[0] - '0';
-          int min = aldeanos[1] - '0';
-          int ing = aldeanos[2] - '0';
-          int gue = aldeanos[3] - '0';
-          if (agr+min+ing+gue != 9){
-            server_send_message(player_actual->socket, 2, "La suma de aldeanos debe ser 9.\n");
-            server_send_message(player_actual->socket, 3, "");
-            continue;       
-          }else{
-            player_actual->agr = agr;
-            player_actual->gue = gue;
-            player_actual->ing = ing;
-            player_actual->min = min;
-            pthread_mutex_lock(&clients_mutex);
-            jugadores_listos++;
-            pthread_mutex_unlock(&clients_mutex);
-            if (player_actual->uid==0){
-              server_send_message(player_actual->socket, 4, "");
-            }else{
-              server_send_message(player_actual->socket, 2, "Espera al jugador lider a que empiece la partida\n");
-            }
-          }
-        }
-      }
-      // Empezar Juego
-      if (msg_code==4 && player_actual->uid==0){
-        char * respuesta = server_receive_payload(player_actual->socket);
-        if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
-            printf("Va a comenzar el juego\n");
-            turno = 0; // setea el primer turno
-            break;
-        }else if(jugadores_conectados==1){
-          server_send_message(player_actual->socket, 2, "Faltan jugadores por conectarse\n");
-          server_send_message(player_actual->socket, 4, "");
-          continue;
-        }else if(jugadores_listos < jugadores_conectados){
-          server_send_message(player_actual->socket, 2, "Faltan jugadores que esten listos\n");
-          server_send_message(player_actual->socket, 4, "");
-          continue;
-        }
-      }
-    }
-
-    if (msg_code==4 && player_actual->uid==0){
-      char * respuesta = server_receive_payload(player_actual->socket);
-      if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
-          game_in_progress = 1;
-          printf("Va a comenzar el juego\n");
-          break;
-      }else if(jugadores_conectados==1){
-        server_send_message(player_actual->socket, 2, "Faltan jugadores por conectarse\n");
-        server_send_message(player_actual->socket, 4, "");
-        continue;
-      }else if(jugadores_listos < jugadores_conectados){
-        server_send_message(player_actual->socket, 2, "Faltan jugadores que esten listos\n");
-        server_send_message(player_actual->socket, 4, "");
-        continue;
-
-      }
-    }
-
-  }
-  pthread_detach(pthread_self());
-
-	return NULL;
+  sprintf(mess, "Bienvenido jugador %d\n", jugador_actual);
+  PlayerInfo *player = init_player_info(jugador_actual);
+  printf("Jugador numero %i(funciona) %i\n", jugador_actual, player->player);
+  printf("Jugador oro %i\n", player->oro);
+  server_send_message(client_socket, 1, mess);
+  server_send_message(players_sockets->socket_c1, 1, "Un usuario se conecto a la partida\n");
 }
-
-
 
 
 int main(int argc, char *argv[]){
-  if(argc > 1){
-    int i_p = 0;
-    for(int i = 1; i< argc; i++){
-      if(strcmp(argv[i], "-i")==0 && i+1 < argc){
-        IP = argv[i+1];
-        i_p = 1;
-      }
-      if(strcmp(argv[i], "-p")==0 && i+1 < argc){
-        PORT = atoi(argv[i+1]);
-      }
+  char * IP = "0.0.0.0";
+  int PORT = 8080;
+  printf("Server Projecto Redes\n");
+  // Se crea el socket del servidor 
+  //prepare_sockets_and_get_clients(IP,PORT);
+  int server_socket = prepare_socket(IP, PORT);
+  printf("Esperando jugador lider\n");
+  int* s_socket = &server_socket;
+
+  players_sockets = malloc(sizeof(players_sockets));
+  players_sockets ->socket_c1 = get_clients(server_socket);
+ 
+  char * welcome = "Bienvenido jugador 1!!\nAl ser el primer jugador, eres el líder del grupo \nAhora espera a 2 o más jugadores para empezar\n";
+  server_send_message(players_sockets->socket_c1, 1, welcome);
+  printf("El jugador lider se ha conectado!\n");
+  pthread_t thread2,thread3, thread4;
+  int iret1 = pthread_create(&thread2, NULL, waiting_clients, (void*) s_socket);
+  int iret2 = pthread_create(&thread3, NULL, waiting_clients, (void*) s_socket);
+  int iret3 = pthread_create(&thread4, NULL, waiting_clients, (void*) s_socket);
+  while (1){
+    int msg_code = server_receive_id(players_sockets->socket_c1);
+    
+    if (msg_code == 1) //El cliente me envió un mensaje a mi (servidor)
+    {
+      char * client_message = server_receive_payload(players_sockets->socket_c1);
+      printf("El cliente %d dice: %s\n", 1, client_message);
+
+      // Le enviaremos el mismo mensaje invertido jeje
+      char * response = revert(client_message);
+
+      // Le enviamos la respuesta
+      server_send_message(players_sockets->socket_c1, 1, response);
+      break;
     }
-    if(i_p==0){
-      IP = "0.0.0.0";
-    }
-  }else{
-    IP = "0.0.0.0";
-  }
-  printf("Server Projecto Redes mounted in: %s:%i\n",IP,PORT);
-  server_socket = prepare_socket(IP, PORT);
-  printf("Esperando jugadores \n");
-  init_all_player_info(players_info);
-  pthread_t tid;
+  } 
+  close(server_socket);
+
   while(1){
-		//printf("entre al while\n");
-		int client_socket = get_clients(server_socket);
-    printf("Llego un jugador\n");
-		/* Check if max clients is reached */
-		if(cli_count == 4){
-      server_send_message(client_socket,0,"Max clients reached. Rejected connection\n");
-			close(client_socket);
-			continue;
-		}
-    if (game_in_progress) {
-      printf("Se intentó conectar un jugador pero fue kickeado\n");
-      server_send_message(client_socket,0,"Game has already started.\nExiting...\n");
-      close(client_socket);
-      continue;
-    }
 
-		queue_add(client_socket);
-    PlayerInfo* player = players_info[cli_count];
-    cli_count++;
-		pthread_create(&tid, NULL, &handle_client, (void *) player);
+    break;
+  }
+  // // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
+  // int sockets_array[2] = {players_info->socket_c1, players_info->socket_c2};
+  // int my_attention = 0;
+  // while (1)
+  // {
+  //   // Se obtiene el paquete del cliente 1
+  //   int msg_code = server_receive_id(sockets_array[my_attention]);
 
-		/* Reduce CPU usage */
-		sleep(1);
-	}
+  //   if (msg_code == 1) //El cliente me envió un mensaje a mi (servidor)
+  //   {
+  //     char * client_message = server_receive_payload(sockets_array[my_attention]);
+  //     printf("El cliente %d dice: %s\n", my_attention+1, client_message);
 
-  free_init_all(players_info);
+  //     // Le enviaremos el mismo mensaje invertido jeje
+  //     char * response = revert(client_message);
+
+  //     // Le enviamos la respuesta
+  //     server_send_message(sockets_array[my_attention], 1, response);
+  //   }
+  //   else if (msg_code == 2){ //El cliente le envía un mensaje al otro cliente
+  //     char * client_message = server_receive_payload(sockets_array[my_attention]);
+  //     printf("Servidor traspasando desde %d a %d el mensaje: %s\n", my_attention+1, ((my_attention+1)%2)+1, client_message);
+
+  //     // Mi atención cambia al otro socket
+  //     my_attention = (my_attention + 1) % 2;
+
+  //     server_send_message(sockets_array[my_attention], 2, client_message);
+  //   }
+  //   printf("------------------\n");
+  // }
   close(server_socket);
   return 0;
 }

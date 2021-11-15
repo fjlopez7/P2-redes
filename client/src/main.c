@@ -25,77 +25,57 @@ int main (int argc, char *argv[]){
   printf("Conectando al servidor de IkaRuz\n");
   // Se prepara el socket
   int server_socket = prepare_socket(IP, PORT);
-  
+
   // Se inicializa un loop para recibir todo tipo de paquetes y tomar una acción al respecto
   while (1){
     int msg_code = client_receive_id(server_socket);
-
-    // Cierres de conexión
-    if (msg_code == 0) { 
-      char * message = client_receive_payload(server_socket);
-      printf("%s\n", message);
-      printf("------------------\n");
-      free(message);
-      break;
-    }
-    //Igresar el nombre
-    else if (msg_code == 1) { 
+    
+    if (msg_code == 1) { //Recibimos un mensaje del servidor
       char * message = client_receive_payload(server_socket);
       printf("%s", message);
       printf("------------------\n");
       free(message);
 
-      printf("Ingresa tu nombre:\n");
-      char * response = get_input();
-      client_send_message(server_socket, 1, response);
+      printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
+      int option = getchar() - '0';
+      getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
       printf("------------------\n");
-    }
+      // printf("Ingrese su mensaje: ");
+      // char * response = get_input();
+      
 
-    //Se le mandan los jugadores conectados al lider
-    else if (msg_code == 2) { 
-      //printf("entro a msgcode==2\n");
+      // client_send_message(server_socket, option, response);
+    }
+    if (msg_code == 13) { //Recibimos un mensaje del servidor
       char * message = client_receive_payload(server_socket);
       printf("%s", message);
       printf("------------------\n");
       free(message);
-    }
 
-    //Repartir aldeanos:
-    else if (msg_code == 3) { 
-      char * message = client_receive_payload(server_socket);
-      //printf("%s\n",message);
-      free(message);
-  
-      printf("Reparte tus 9 aldeanos en los 4 roles Agicultores-Mineros-Ingenieros-Guerreros:\n");
-      // los ingresa como: 3312 por ejemplo
-      char * response = get_input();
-      printf("------------------\n");
-      client_send_message(server_socket, 3, response);
+      
       
     }
-    //Para comenzar el juego:
-    else if (msg_code == 4) { 
+
+    if (msg_code == 2) { //Recibimos un mensaje que proviene del otro cliente
       char * message = client_receive_payload(server_socket);
+      printf("El otro cliente dice: %s\n", message);
       free(message);
-      printf("Debes esperar a que todos los jugadores hayan completado su información\n");
-      printf("Para comenzar el juego ingresa cualquier carácter:\n");
+
+      printf("¿Qué desea hacer?\n   1)Enviar mensaje al servidor\n   2)Enviar mensaje al otro cliente\n");
+      int option = getchar() - '0';
+      getchar(); //Para capturar el "enter" que queda en el buffer de entrada stdin
+      
+      printf("Ingrese su mensaje: ");
       char * response = get_input();
-      printf("------------------\n");
-      client_send_message(server_socket, 4, response);
+
+      client_send_message(server_socket, option, response);
     }
-    else {
-      char * message = client_receive_payload(server_socket);
-      free(message);
-      printf("Mensaje desconocido\n");
-      printf("ID: %i\n", msg_code);
-      printf("%s\n", message);
-      printf("------------------\n");
-    }
-    
+    //printf("------------------\n");
   }
 
   // Se cierra el socket
   close(server_socket);
+  free(IP);
 
   return 0;
 }
