@@ -38,7 +38,7 @@ int main (int argc, char *argv[]){
       break;
     }
     //Igresar el nombre
-    if (msg_code == 1) { 
+    else if (msg_code == 1) { 
       char * message = client_receive_payload(server_socket);
       printf("%s", message);
       printf("------------------\n");
@@ -51,7 +51,7 @@ int main (int argc, char *argv[]){
     }
 
     //Se le mandan los jugadores conectados al lider
-    if (msg_code == 2) { 
+    else if (msg_code == 2) { 
       //printf("entro a msgcode==2\n");
       char * message = client_receive_payload(server_socket);
       printf("%s", message);
@@ -60,7 +60,7 @@ int main (int argc, char *argv[]){
     }
 
     //Repartir aldeanos:
-    if (msg_code == 3) { 
+    else if (msg_code == 3) { 
       char * message = client_receive_payload(server_socket);
       //printf("%s\n",message);
       free(message);
@@ -73,7 +73,7 @@ int main (int argc, char *argv[]){
       
     }
     //Para comenzar el juego:
-    if (msg_code == 4) { 
+    else if (msg_code == 4) { 
       char * message = client_receive_payload(server_socket);
       free(message);
       printf("Debes esperar a que todos los jugadores hayan completado su información\n");
@@ -82,7 +82,15 @@ int main (int argc, char *argv[]){
       printf("------------------\n");
       client_send_message(server_socket, 4, response);
     }
+    else {
+      char * message = client_receive_payload(server_socket);
+      free(message);
+      printf("Mensaje desconocido\n");
+      printf("ID: %i\n", msg_code);
+      printf("%s\n", message);
+      printf("------------------\n");
 
+    }
     
   }
 
