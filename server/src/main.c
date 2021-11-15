@@ -21,6 +21,9 @@ char * revert(char * message){
   return response;
 }
 int jugador_actual = 1;
+//int = 0;
+//int = 0;
+//int = 0,
 PlayersSockets * players_sockets;
 void * waiting_clients(void* server_socket){
   int server_socket1 = *((int *)server_socket);
@@ -32,6 +35,7 @@ void * waiting_clients(void* server_socket){
   sprintf(mess, "Bienvenido jugador %d\n", jugador_actual);
   PlayerInfo *player = init_player_info(jugador_actual);
   printf("Jugador numero %i(funciona) %i\n", jugador_actual, player->player);
+  printf("Jugador oro %i\n", player->oro);
   server_send_message(client_socket, 1, mess);
   server_send_message(players_sockets->socket_c1, 1, "Un usuario se conecto a la partida\n");
 }
@@ -74,6 +78,11 @@ int main(int argc, char *argv[]){
     }
   } 
   close(server_socket);
+
+  while(1){
+
+    break;
+  }
   // // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
   // int sockets_array[2] = {players_info->socket_c1, players_info->socket_c2};
   // int my_attention = 0;

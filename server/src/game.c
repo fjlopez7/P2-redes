@@ -20,6 +20,6 @@ PlayerInfo *init_player_info(int jugador_actual){
     player_info->comida= 10;
     player_info->oro= 10;
     player_info->ciencia= 10;
-    player_info->estado= 10;
+    player_info->estado= 1;
     return player_info;
 }
