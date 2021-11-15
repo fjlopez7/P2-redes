@@ -4,6 +4,7 @@ int client_receive_id(int client_socket){
   // Se obtiene solamente el ID del mensaje
   int id = 0;
   recv(client_socket, &id, 1, 0);
+  //printf("ID CLIENTE: %i\n", id);
   return id;
 }
 

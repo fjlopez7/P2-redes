@@ -27,9 +27,9 @@ int prepare_socket(char * IP, int PORT){
   return server_socket;
 }
 int get_clients(int server_socket){
+  //printf("Entre al get clients \n");
   struct sockaddr_in client_addr;
   socklen_t addr_size = sizeof(client_addr);
   return accept(server_socket, (struct sockaddr *)&client_addr, &addr_size);
 }
-
 
