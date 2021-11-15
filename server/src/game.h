@@ -24,3 +24,9 @@ typedef struct player_info{
 
 void init_all_player_info(PlayerInfo** players_info);
 void free_init_all(PlayerInfo** players_info);
+int create_villager(PlayerInfo* player_info, int type);
+int level_up(PlayerInfo* player_info, int type);
+int attack(PlayerInfo* player_info, PlayerInfo** players_info, int id_2);
+int spy(PlayerInfo* player_info, int id_2);
+int steal(PlayerInfo* player_info, PlayerInfo** players_info, int id_2, int type);
+void surrender(PlayerInfo* player_info);
