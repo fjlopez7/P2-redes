@@ -20,6 +20,7 @@ int PORT = 8080;
 int server_socket;
 static _Atomic unsigned int jugadores_listos = 0;
 static _Atomic unsigned int jugadores_conectados = 0;
+static _Atomic unsigned int turno = -1;
 PlayerInfo* players_info[4];
 
 void queue_add(int socket_client){
@@ -52,69 +53,84 @@ void *handle_client(void* player){
   
 	while(1){
     int msg_code = server_receive_id(player_actual->socket);
-    if (msg_code == 1){
-      char * nombre = server_receive_payload(player_actual->socket);
-      //Dice en el server los jugadores conectados
-      if (strlen(nombre) > 0){
-        strcpy(players_info[player_actual->uid]->name,nombre);
-        //printf("El jugador %i se llama: %s\n",player_actual->uid,player_actual->name);
-        //Le avisa al lider los jugadores que se conectan
-        if (player_actual->uid > 0){
-          char mess2[90];
-          sprintf(mess2, "Se ha conectado el jugador: %s\n", player_actual->name);
-          server_send_message(players_info[0]->socket, 2, mess2);
-        }
-        server_send_message(player_actual->socket, 3, "");
-      }else{
-        server_send_message(player_actual->socket, 1, mess1);
-      }
-    }
-    if (msg_code==3){
-      char * aldeanos = server_receive_payload(player_actual->socket);
-      if (strlen(aldeanos) < 4){
-        server_send_message(player_actual->socket, 2, "Recuerda las clases son 4\n");
-        server_send_message(player_actual->socket, 3, "");
-        continue;
-      }else{
-        int agr = aldeanos[0] - '0';
-        int min = aldeanos[1] - '0';
-        int ing = aldeanos[2] - '0';
-        int gue = aldeanos[3] - '0';
-        if (agr+min+ing+gue != 9){
-          server_send_message(player_actual->socket, 2, "La suma de aldeanos debe ser 9.\n");
+    if(turno == -1){
+      // Recibir nombre
+      if (msg_code == 1){
+        char * nombre = server_receive_payload(player_actual->socket);
+        //Dice en el server los jugadores conectados
+        if (strlen(nombre) > 0){
+          strcpy(players_info[player_actual->uid]->name,nombre);
+          //printf("El jugador %i se llama: %s\n",player_actual->uid,player_actual->name);
+          //Le avisa al lider los jugadores que se conectan
+          if (player_actual->uid > 0){
+            char mess2[90];
+            sprintf(mess2, "Se ha conectado el jugador: %s\n", player_actual->name);
+            server_send_message(players_info[0]->socket, 2, mess2);
+          }
           server_send_message(player_actual->socket, 3, "");
-          continue;       
         }else{
-          player_actual->agr = agr;
-          player_actual->gue = gue;
-          player_actual->ing = ing;
-          player_actual->min = min;
-          pthread_mutex_lock(&clients_mutex);
-          jugadores_listos++;
-          pthread_mutex_unlock(&clients_mutex);
-          if (player_actual->uid==0){
-            server_send_message(player_actual->socket, 4, "");
+          server_send_message(player_actual->socket, 1, mess1);
+        }
+      }
+      // Recibir aldeanos
+      if (msg_code==3){
+        char * aldeanos = server_receive_payload(player_actual->socket);
+        if (strlen(aldeanos) < 4){
+          server_send_message(player_actual->socket, 2, "Recuerda las clases son 4\n");
+          server_send_message(player_actual->socket, 3, "");
+          continue;
+        }else{
+          int agr = aldeanos[0] - '0';
+          int min = aldeanos[1] - '0';
+          int ing = aldeanos[2] - '0';
+          int gue = aldeanos[3] - '0';
+          if (agr+min+ing+gue != 9){
+            server_send_message(player_actual->socket, 2, "La suma de aldeanos debe ser 9.\n");
+            server_send_message(player_actual->socket, 3, "");
+            continue;       
           }else{
-            server_send_message(player_actual->socket, 2, "Espera al jugador lider a que empiece la partida\n");
+            player_actual->agr = agr;
+            player_actual->gue = gue;
+            player_actual->ing = ing;
+            player_actual->min = min;
+            pthread_mutex_lock(&clients_mutex);
+            jugadores_listos++;
+            pthread_mutex_unlock(&clients_mutex);
+            if (player_actual->uid==0){
+              server_send_message(player_actual->socket, 4, "");
+            }else{
+              server_send_message(player_actual->socket, 2, "Espera al jugador lider a que empiece la partida\n");
+            }
           }
         }
       }
-    }
-    if (msg_code==4 && player_actual->uid==0){
-      char * respuesta = server_receive_payload(player_actual->socket);
-      if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
-          printf("Va a comenzar el juego\n");
-          break;
-      }else if(jugadores_conectados==1){
-        server_send_message(player_actual->socket, 2, "Faltan jugadores por conectarse\n");
-        server_send_message(player_actual->socket, 4, "");
-        continue;
-      }else if(jugadores_listos < jugadores_conectados){
-        server_send_message(player_actual->socket, 2, "Faltan jugadores que esten listos\n");
-        server_send_message(player_actual->socket, 4, "");
-        continue;
+      // Empezar Juego
+      if (msg_code==4 && player_actual->uid==0){
+        char * respuesta = server_receive_payload(player_actual->socket);
+        if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
+            printf("Va a comenzar el juego\n");
+            turno = 0; // setea el primer turno
+            break;
+        }else if(jugadores_conectados==1){
+          server_send_message(player_actual->socket, 2, "Faltan jugadores por conectarse\n");
+          server_send_message(player_actual->socket, 4, "");
+          continue;
+        }else if(jugadores_listos < jugadores_conectados){
+          server_send_message(player_actual->socket, 2, "Faltan jugadores que esten listos\n");
+          server_send_message(player_actual->socket, 4, "");
+          continue;
+        }
       }
     }
+    // Empieza el juego, turno != -1
+    else {
+      if (player_actual->uid == turno){
+        
+      } else {
+        server_send_message(player_actual->socket, 5, "Solo puedes realizar acciones durante tu turno\n");
+      }
+    }
+
   }
   pthread_detach(pthread_self());
 
