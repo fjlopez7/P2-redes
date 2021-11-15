@@ -29,85 +29,57 @@ int main (int argc, char *argv[]){
   // Se inicializa un loop para recibir todo tipo de paquetes y tomar una acción al respecto
   while (1){
     int msg_code = client_receive_id(server_socket);
-    
-    if (msg_code == 1) { 
+
+    if (msg_code == 0) { 
       char * message = client_receive_payload(server_socket);
       printf("%s", message);
+      printf("------------------\n");
+      free(message);
+      break;
+    }
+    //Igresar el nombre
+    if (msg_code == 1) { 
+      char * message = client_receive_payload(server_socket);
+      printf("message: %s", message);
       printf("------------------\n");
       free(message);
 
       printf("Ingresa tu nombre:\n");
       char * response = get_input();
-      printf("------------------\n");
       client_send_message(server_socket, 1, response);
     }
+
+    //Se le mandan los jugadores conectados al lider
     if (msg_code == 2) { 
+      printf("entro a msgcode==2\n");
       char * message = client_receive_payload(server_socket);
-      printf("%s", message);
+      printf("message: %s", message);
       printf("------------------\n");
       free(message);
-
-      printf("Reparte tus 9 aldeanos en los 4 roles Agicultores-Mineros-Ingenieros-Guerreros:\n");
-      char * response2 = get_input();
-      printf("------------------\n");
-      client_send_message(server_socket, 2, response2);      
-      
-     
-      // printf("Posees 9 aldeanos y debes repartirlo en las 4 clases.\n");
-      // printf("Número de agricultores:\n");
-      // char * agr_s =  get_input();
-      
-      // int agr = agr_s[0] - '0';
-      // printf("aledeano %i", agr);
-      // printf("------------------ \n");
-      
-      // while (9< agr || 0>agr)
-      // {
-      //   printf("Ingresa un número válido.\n");
-      //   printf("Número de agricultores:\n");
-      //   agr = getchar() - '0';
-        
-      //   getchar();
-      //   printf("------------------\n");
-      // }
-      
-      // char buffer[2];
-      // sprintf(buffer, "%d", agr); 
-      // printf("here");
-
-      client_send_message(server_socket, 2, "1");
-      
     }
+
+    //Repartir aldeanos:
     if (msg_code == 3) { 
       char * message = client_receive_payload(server_socket);
-      printf("mensaje: %s", message);
+      printf("%s\n",message);
       free(message);
+  
+      printf("Reparte tus 9 aldeanos en los 4 roles Agicultores-Mineros-Ingenieros-Guerreros:\n");
+      // los ingresa como: 3312 por ejemplo
+      char * response = get_input();
+      printf("------------------\n");
+      client_send_message(server_socket, 3, response);
       
-     
-      // printf("Posees 9 aldeanos y debes repartirlo en las 4 clases.\n");
-      // printf("Número de agricultores:\n");
-      // char * agr_s =  get_input();
-      
-      // int agr = agr_s[0] - '0';
-      // printf("aledeano %i", agr);
-      // printf("------------------ \n");
-      
-      // while (9< agr || 0>agr)
-      // {
-      //   printf("Ingresa un número válido.\n");
-      //   printf("Número de agricultores:\n");
-      //   agr = getchar() - '0';
-        
-      //   getchar();
-      //   printf("------------------\n");
-      // }
-      
-      // char buffer[2];
-      // sprintf(buffer, "%d", agr); 
-      // printf("here");
-
-      
-      
+    }
+    //Para comenzar el juego:
+    if (msg_code == 4) { 
+      char * message = client_receive_payload(server_socket);
+      free(message);
+      printf("Debes esperar a que todos los jugadores hayan completado su información\n");
+      printf("Para comenzar el juego ingresa: si\n");
+      char * response = get_input();
+      printf("------------------\n");
+      client_send_message(server_socket, 4, response);
     }
 
     
@@ -115,7 +87,6 @@ int main (int argc, char *argv[]){
 
   // Se cierra el socket
   close(server_socket);
-  free(IP);
 
   return 0;
 }
