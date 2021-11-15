@@ -82,6 +82,11 @@ int main (int argc, char *argv[]){
       printf("------------------\n");
       client_send_message(server_socket, 4, response);
     }
+    // Connection refused -> kicked
+    else if (msg_code == 5){
+      printf("El juego ya comenzó, por favor intentalo mas tarde\n");
+      break;
+    }
     else {
       char * message = client_receive_payload(server_socket);
       free(message);
@@ -89,7 +94,6 @@ int main (int argc, char *argv[]){
       printf("ID: %i\n", msg_code);
       printf("%s\n", message);
       printf("------------------\n");
-
     }
     
   }
