@@ -20,6 +20,7 @@ char * server_receive_payload(int client_socket){
   char * payload = malloc(len);
   int received = recv(client_socket, payload, len, 0);
   // Se retorna
+  printf("client_socket:%i, payload: %s, len: %i\n", client_socket, payload, len);
   printf("Llegue al receive_payload del server:\n");
   return payload;
 }
