@@ -29,6 +29,14 @@ int main (int argc, char *argv[]){
   // Se inicializa un loop para recibir todo tipo de paquetes y tomar una acción al respecto
   while (1){
     int msg_code = client_receive_id(server_socket);
+
+    if (msg_code == 0) { 
+      char * message = client_receive_payload(server_socket);
+      printf("%s", message);
+      printf("------------------\n");
+      free(message);
+      break;
+    }
     
     if (msg_code == 1) { 
       char * message = client_receive_payload(server_socket);
@@ -43,8 +51,11 @@ int main (int argc, char *argv[]){
     }
     if (msg_code == 2) { 
       char * message = client_receive_payload(server_socket);
+      printf("%s\n",message);
       free(message);
-      
+      char * response = get_input();
+      printf("------------------\n");
+      client_send_message(server_socket, 3, response);
      
       // printf("Posees 9 aldeanos y debes repartirlo en las 4 clases.\n");
       // printf("Número de agricultores:\n");
@@ -68,7 +79,7 @@ int main (int argc, char *argv[]){
       // sprintf(buffer, "%d", agr); 
       // printf("here");
 
-      client_send_message(server_socket, 2, "1");
+      
       
     }
     if (msg_code == 3) { 
@@ -108,7 +119,6 @@ int main (int argc, char *argv[]){
 
   // Se cierra el socket
   close(server_socket);
-  free(IP);
 
   return 0;
 }

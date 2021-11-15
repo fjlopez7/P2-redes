@@ -1,5 +1,5 @@
 typedef struct player_info{
-  char * name;
+  char name[256];
   int player;
   // cantidades de aldeanos de cada clase
   int agr;
@@ -18,7 +18,9 @@ typedef struct player_info{
   int oro;
   int ciencia;
   int socket;
+  int uid;
 } PlayerInfo;
 
 
-PlayerInfo** init_all_player_info();
+void init_all_player_info(PlayerInfo** players_info);
+void free_init_all(PlayerInfo** players_info);

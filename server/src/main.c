@@ -6,134 +6,98 @@
 #include "game.h"
 #include <pthread.h>
 
-int jugador_actual = 1;
-PlayersSockets * players_sockets;
-PlayerInfo** players_info;
-int looby_states[4] = {0,0,0,0};
-void * waiting_clients(void* server_socket){
-  int server_socket1 = *((int *)server_socket);
-  int client_socket = get_clients(server_socket1);
+// Código obtenido
+static _Atomic unsigned int cli_count = 0;
+
+pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int uid = 0;
+
+char * IP;
+int PORT = 8080;
+int server_socket;
+PlayerInfo* players_info[4];
+
+void queue_add(int socket_client){
+	pthread_mutex_lock(&clients_mutex);
+
+	for(int i=0; i < 4; ++i){
+		if(players_info[i]->uid == -1){
+			players_info[i] -> uid = uid++;
+      players_info[i] -> socket = socket_client;
+			break;
+		}
+	}
   
-  jugador_actual++;
-  
+	pthread_mutex_unlock(&clients_mutex);
+}
+
+void *handle_client(void* player){
+	PlayerInfo* player_actual = player;
   char mess[22];
-  sprintf(mess, "Bienvenido jugador %d\n", jugador_actual);
-  server_send_message(client_socket, 1, mess);
-  looby_states[jugador_actual-1] = 1;
-  players_info[jugador_actual-1] -> socket = client_socket;
+  sprintf(mess, "Bienvenido jugador %d\n", player_actual->uid);
+  server_send_message(player_actual->socket, 1, mess);
+	while(1){
+		
+	}
+
   
+  pthread_detach(pthread_self());
+
+	return NULL;
 }
 
 
+
 int main(int argc, char *argv[]){
-  char * IP = "0.0.0.0";
-  int PORT = 8080;
-  printf("Server Projecto Redes\n");
-  players_info = init_all_player_info();
-  
-  int server_socket = prepare_socket(IP, PORT);
-  printf("Esperando jugador lider \n");
-  int* s_socket = &server_socket;
+  if(argc > 1){
+    int i_p = 0;
+    for(int i = 1; i< argc; i++){
+      if(strcmp(argv[i], "-i")==0 && i+1 < argc){
+        IP = argv[i+1];
+        i_p = 1;
+      }
+      if(strcmp(argv[i], "-p")==0 && i+1 < argc){
+        PORT = atoi(argv[i+1]);
+      }
+    }
+    if(i_p==0){
+      IP = "0.0.0.0";
+    }
+  }else{
+    IP = "0.0.0.0";
+  }
+  printf("Server Projecto Redes mounted in: %s:%i\n",IP,PORT);
+  server_socket = prepare_socket(IP, PORT);
+  printf("Esperando jugadores \n");
+  init_all_player_info(players_info);
+  pthread_t tid;
+  while(1){
+		
+		int client_socket = get_clients(server_socket);
+    printf("Llego un jugador\n");
+		/* Check if max clients is reached */
+		if(cli_count == 4){
+      server_send_message(client_socket,0,"Max clients reached. Rejected connection\n");
+			close(client_socket);
+			continue;
+		}
 
-  players_sockets = malloc(sizeof(players_sockets));
-  players_sockets ->socket_c1 = get_clients(server_socket);
-  players_info[0] -> socket = players_sockets ->socket_c1;
- 
-  char * welcome = "Bienvenido jugador 1!!\nAl ser el primer jugador, eres el líder del grupo \nAhora espera a 2 o más jugadores para empezar\n";
-  server_send_message(players_sockets->socket_c1, 1, welcome);
-  looby_states[0] = 1;
-  printf("Jugador 1 conectado\n");
-  pthread_t thread2,thread3, thread4;
-  int iret1 = pthread_create(&thread2, NULL, waiting_clients, (void*) s_socket);
-  int iret2 = pthread_create(&thread3, NULL, waiting_clients, (void*) s_socket);
-  int iret3 = pthread_create(&thread4, NULL, waiting_clients, (void*) s_socket);
-  while (1){
-    int msg_code1 = server_receive_id(players_sockets->socket_c1);
-    int msg_code2 = -1;
-    int msg_code3 = -1;
-    int msg_code4 = -1;
-    if( jugador_actual == 2 ){
-      msg_code2 = server_receive_id(players_sockets->socket_c2);
-    }
-
-    if( jugador_actual == 3 ){
-      msg_code3 = server_receive_id(players_sockets->socket_c3);
-    }
-
-    if( jugador_actual == 4 ){
-      msg_code4 = server_receive_id(players_sockets->socket_c4);
-    }
-    if (msg_code1 == 1){
-      char * nombre = server_receive_payload(players_sockets->socket_c1);
-      strcpy(players_info[0]->name,nombre);
-      server_send_message(players_sockets->socket_c1, 2, "ahhhh");
-    }
-    if (msg_code2 == 1){
-      char * nombre = server_receive_payload(players_sockets->socket_c2);
-      strcpy(players_info[1]->name,nombre);
-      server_send_message(players_sockets->socket_c2, 2, "");
-    }
-    if (msg_code3 == 1){
-      char * nombre = server_receive_payload(players_sockets->socket_c3);
-      strcpy(players_info[2]->name,nombre);
-      server_send_message(players_sockets->socket_c3, 2, "");
-    }
-    if (msg_code4 == 1){
-      char * nombre = server_receive_payload(players_sockets->socket_c4);
-      strcpy(players_info[3]->name,nombre);
-      server_send_message(players_sockets->socket_c4, 2, "");
-    }
-    if (msg_code1 == 2){
-      char * nombre = server_receive_payload(players_sockets->socket_c1);
-      
-      int agr = nombre[0] - '0';
-      server_send_message(players_sockets->socket_c1, 3, "");
-    }
-    if (msg_code2 == 2){
-      char * agr_s = server_receive_payload(players_sockets->socket_c2);
-      
-      int agr = agr_s[0] - '0';
-      server_send_message(players_sockets->socket_c1, 3, "");
-    }
-    if (msg_code3 == 2){
-      char * agr_s = server_receive_payload(players_sockets->socket_c3);
-      
-      int agr = agr_s[0] - '0';
-      server_send_message(players_sockets->socket_c3, 3, "");
-    }
+		
     
-  } 
-  close(server_socket);
-  // // Guardaremos los sockets en un arreglo e iremos alternando a quién escuchar.
-  // int sockets_array[2] = {players_info->socket_c1, players_info->socket_c2};
-  // int my_attention = 0;
-  // while (1)
-  // {
-  //   // Se obtiene el paquete del cliente 1
-  //   int msg_code = server_receive_id(sockets_array[my_attention]);
+		queue_add(client_socket);
+    PlayerInfo* player = players_info[cli_count];
+    cli_count++;
+		pthread_create(&tid, NULL, &handle_client, (void *) player);
 
-  //   if (msg_code == 1) //El cliente me envió un mensaje a mi (servidor)
-  //   {
-  //     char * client_message = server_receive_payload(sockets_array[my_attention]);
-  //     printf("El cliente %d dice: %s\n", my_attention+1, client_message);
+		/* Reduce CPU usage */
+		sleep(1);
+	}
 
-  //     // Le enviaremos el mismo mensaje invertido jeje
-  //     char * response = revert(client_message);
 
-  //     // Le enviamos la respuesta
-  //     server_send_message(sockets_array[my_attention], 1, response);
-  //   }
-  //   else if (msg_code == 2){ //El cliente le envía un mensaje al otro cliente
-  //     char * client_message = server_receive_payload(sockets_array[my_attention]);
-  //     printf("Servidor traspasando desde %d a %d el mensaje: %s\n", my_attention+1, ((my_attention+1)%2)+1, client_message);
 
-  //     // Mi atención cambia al otro socket
-  //     my_attention = (my_attention + 1) % 2;
+  free_init_all(players_info);
 
-  //     server_send_message(sockets_array[my_attention], 2, client_message);
-  //   }
-  //   printf("------------------\n");
-  // }
-  close(server_socket);
+
   return 0;
 }

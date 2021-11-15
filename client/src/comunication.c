@@ -28,5 +28,6 @@ void client_send_message(int client_socket, int pkg_id, char * message){
   msg[1] = payloadSize;
   memcpy(&msg[2], message, payloadSize);
   // Se envía el paquete
+  printf("ahhhhhh %s\n",msg);
   send(client_socket, msg, 2+payloadSize, 0);
 }

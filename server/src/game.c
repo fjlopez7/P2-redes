@@ -15,17 +15,23 @@ PlayerInfo* init_player_info(){
     player_info -> gue = 0;
     player_info -> ing = 0;
     player_info -> min = 0;
-    player_info -> name = malloc(256*sizeof(char));
+    player_info -> uid = -1;
     player_info -> aldeanos_initial = 9;
     return player_info;
 }
 
 
-PlayerInfo** init_all_player_info(){
-    PlayerInfo** player_info = malloc(4*sizeof(PlayerInfo*));
-    player_info[0] = init_player_info();
-    player_info[1] = init_player_info();
-    player_info[2] = init_player_info();
-    player_info[3] = init_player_info();
-    return player_info;
+void init_all_player_info(PlayerInfo** players_info){
+    players_info[0] = init_player_info();
+    players_info[1] = init_player_info();
+    players_info[2] = init_player_info();
+    players_info[3] = init_player_info();
+    return;
+}
+
+void free_init_all(PlayerInfo** players_info){
+    free(players_info[0]);
+    free(players_info[1]);
+    free(players_info[2]);
+    free(players_info[3]);
 }
