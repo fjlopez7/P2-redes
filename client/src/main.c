@@ -40,20 +40,21 @@ int main (int argc, char *argv[]){
     //Igresar el nombre
     if (msg_code == 1) { 
       char * message = client_receive_payload(server_socket);
-      printf("message: %s", message);
+      printf("%s", message);
       printf("------------------\n");
       free(message);
 
       printf("Ingresa tu nombre:\n");
       char * response = get_input();
       client_send_message(server_socket, 1, response);
+      printf("------------------\n");
     }
 
     //Se le mandan los jugadores conectados al lider
     if (msg_code == 2) { 
-      printf("entro a msgcode==2\n");
+      //printf("entro a msgcode==2\n");
       char * message = client_receive_payload(server_socket);
-      printf("message: %s", message);
+      printf("%s", message);
       printf("------------------\n");
       free(message);
     }
@@ -61,7 +62,7 @@ int main (int argc, char *argv[]){
     //Repartir aldeanos:
     if (msg_code == 3) { 
       char * message = client_receive_payload(server_socket);
-      printf("%s\n",message);
+      //printf("%s\n",message);
       free(message);
   
       printf("Reparte tus 9 aldeanos en los 4 roles Agicultores-Mineros-Ingenieros-Guerreros:\n");
@@ -76,7 +77,7 @@ int main (int argc, char *argv[]){
       char * message = client_receive_payload(server_socket);
       free(message);
       printf("Debes esperar a que todos los jugadores hayan completado su información\n");
-      printf("Para comenzar el juego ingresa: si\n");
+      printf("Para comenzar el juego ingresa cualquier carácter:\n");
       char * response = get_input();
       printf("------------------\n");
       client_send_message(server_socket, 4, response);

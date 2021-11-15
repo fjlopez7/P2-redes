@@ -1,5 +1,5 @@
 typedef struct player_info{
-  char name[256];
+  char name[50];
   int player;
   // cantidades de aldeanos de cada clase
   int agr;

@@ -16,14 +16,13 @@ char * server_receive_payload(int client_socket){
   int len = 0;
   //);
   recv(client_socket, &len, 1, 0);
-  recv(client_socket, &len, 1, 0);
   // Se obtiene el payload
   char * payload = malloc(len);
-  printf("len:%i\n", len);
+  //printf("len:%i\n", len);
   int received = recv(client_socket, payload, len, 0);
   // Se retorna
-  printf("received%i\n", received);
-  printf("payload:%s\n", payload);
+  //printf("received%i\n", received);
+  //printf("payload:%s\n", payload);
   return payload;
 }
 

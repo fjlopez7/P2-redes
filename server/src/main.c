@@ -18,8 +18,8 @@ static int uid = 0;
 char * IP;
 int PORT = 8080;
 int server_socket;
-int jugadores_listos = 0;
-int jugadores_conectados = 0;
+static _Atomic unsigned int jugadores_listos = 0;
+static _Atomic unsigned int jugadores_conectados = 0;
 PlayerInfo* players_info[4];
 
 void queue_add(int socket_client){
@@ -44,80 +44,84 @@ void *handle_client(void* player){
   char mess1[29];
   if (player_actual->uid==0){
     sprintf(mess1, "Bienvenido jugador líder %d\n", player_actual->uid);
-    printf("mi socket es: %i\n",players_info[player_actual->uid]->socket);
-  }else{sprintf(mess1, "Bienvenido jugador %d\n", player_actual->uid);}
+    //printf("mi socket es: %i\n",players_info[player_actual->uid]->socket);
+  }else{
+    sprintf(mess1, "Bienvenido jugador %d\n", player_actual->uid);
+  }
   server_send_message(player_actual->socket, 1, mess1);
   
 	while(1){
-		char * nombre = server_receive_payload(player_actual->socket);
-    //Dice en el server los jugadores conectados
-    if (strlen(nombre) > 0){
-      strcpy(players_info[player_actual->uid]->name,nombre);
-      printf("El jugador %i se llama: %s\n",player_actual->uid,player_actual->name);
-      //Le avisa al lider los jugadores que se conectan
-      if (player_actual->uid > 0){
-        char mess2[42];
-        sprintf(mess2, "Se ha conectado el jugador: %s\n", player_actual->name);
-        server_send_message(players_info[0]->socket, 2, mess2);
-      }
-    }
-
-
-    //Le pide ingresar aldeanos hasta que lo haga bien
-    while(1){
-      char mess3[3] = "-\n";
-      server_send_message(players_info[player_actual->uid]->socket, 3, mess3);
-      char * aldeanos = server_receive_payload(player_actual->socket);
-      printf("El jugador %i ingreso sus aldeanos: %s\n",player_actual->uid,aldeanos);
-      
-      //Verificar que sumen 9:
-      
-      int sum_aldeanos = atoi(aldeanos);
-      int agr = sum_aldeanos/1000;
-      int min = (sum_aldeanos%1000)/100;
-      int ing = (sum_aldeanos%100)/10;
-      int gue = (sum_aldeanos%10)/1;
-      printf("Aldeanos sumaron: %i\n", agr+min+ing+gue);
-      if (agr+min+ing+gue != 9){
-        printf("Ingreso mal los aldeanos\n"); 
-        continue;       
+    int msg_code = server_receive_id(player_actual->socket);
+    if (msg_code == 1){
+      char * nombre = server_receive_payload(player_actual->socket);
+      //Dice en el server los jugadores conectados
+      if (strlen(nombre) > 0){
+        strcpy(players_info[player_actual->uid]->name,nombre);
+        //printf("El jugador %i se llama: %s\n",player_actual->uid,player_actual->name);
+        //Le avisa al lider los jugadores que se conectan
+        if (player_actual->uid > 0){
+          char mess2[90];
+          sprintf(mess2, "Se ha conectado el jugador: %s\n", player_actual->name);
+          server_send_message(players_info[0]->socket, 2, mess2);
+        }
+        server_send_message(player_actual->socket, 3, "");
       }else{
-        printf("Ingreso bien los aldeanos\n");
-        players_info[player_actual->uid]->agr = agr;
-        players_info[player_actual->uid]->gue = gue;
-        players_info[player_actual->uid]->ing = ing;
-        players_info[player_actual->uid]->min = min;
-        printf("El jugador %i mineros: %i\n",player_actual->uid, player_actual->min);
-        jugadores_listos++;
-        break;
+        server_send_message(player_actual->socket, 1, mess1);
       }
     }
-    if (player_actual->uid==0){
-      printf("Se le da la opción de iniciar el juego\n");
-      while(1){
-        char mess4[3] = "-\n";
-        server_send_message(players_info[player_actual->uid]->socket, 4, mess4);
-        char * respuesta = server_receive_payload(player_actual->socket);
-        printf("Jugadores conectados:%i\n", jugadores_conectados);
-        printf("Jugadores listos:%i\n", jugadores_listos);
-        if (strcmp(respuesta, "si")==0 && jugadores_listos==jugadores_conectados)
-        {
-          //Iniciar el juego, no se como
-          printf("Va a comenzar el juego\n");
-          break;
+    if (msg_code==3){
+      char * aldeanos = server_receive_payload(player_actual->socket);
+      if (strlen(aldeanos) < 4){
+        server_send_message(player_actual->socket, 2, "Recuerda las clases son 4\n");
+        server_send_message(player_actual->socket, 3, "");
+        continue;
+      }else{
+        int agr = aldeanos[0] - '0';
+        int min = aldeanos[1] - '0';
+        int ing = aldeanos[2] - '0';
+        int gue = aldeanos[3] - '0';
+        if (agr+min+ing+gue != 9){
+          server_send_message(player_actual->socket, 2, "La suma de aldeanos debe ser 9.\n");
+          server_send_message(player_actual->socket, 3, "");
+          continue;       
         }else{
-          continue;
+          player_actual->agr = agr;
+          player_actual->gue = gue;
+          player_actual->ing = ing;
+          player_actual->min = min;
+          pthread_mutex_lock(&clients_mutex);
+          jugadores_listos++;
+          pthread_mutex_unlock(&clients_mutex);
+          if (player_actual->uid==0){
+            server_send_message(player_actual->socket, 4, "");
+          }else{
+            server_send_message(player_actual->socket, 2, "Espera al jugador lider a que empiece la partida\n");
+          }
         }
       }
-
-
-	  }
-  
+    }
+    if (msg_code==4 && player_actual->uid==0){
+      char * respuesta = server_receive_payload(player_actual->socket);
+      if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
+          printf("Va a comenzar el juego\n");
+          break;
+      }else if(jugadores_conectados==1){
+        server_send_message(player_actual->socket, 2, "Faltan jugadores por conectarse\n");
+        server_send_message(player_actual->socket, 4, "");
+        continue;
+      }else if(jugadores_listos < jugadores_conectados){
+        server_send_message(player_actual->socket, 2, "Faltan jugadores que esten listos\n");
+        server_send_message(player_actual->socket, 4, "");
+        continue;
+      }
+    }
+  }
   pthread_detach(pthread_self());
 
 	return NULL;
-  }
 }
+
+
 
 
 int main(int argc, char *argv[]){
