@@ -18,6 +18,7 @@ static int uid = 0;
 char * IP;
 int PORT = 8080;
 int server_socket;
+int game_in_progress = 0;
 static _Atomic unsigned int jugadores_listos = 0;
 static _Atomic unsigned int jugadores_conectados = 0;
 static _Atomic unsigned int turno = -1;
@@ -122,12 +123,22 @@ void *handle_client(void* player){
         }
       }
     }
-    // Empieza el juego, turno != -1
-    else {
-      if (player_actual->uid == turno){
-        
-      } else {
-        server_send_message(player_actual->socket, 5, "Solo puedes realizar acciones durante tu turno\n");
+
+    if (msg_code==4 && player_actual->uid==0){
+      char * respuesta = server_receive_payload(player_actual->socket);
+      if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
+          game_in_progress = 1;
+          printf("Va a comenzar el juego\n");
+          break;
+      }else if(jugadores_conectados==1){
+        server_send_message(player_actual->socket, 2, "Faltan jugadores por conectarse\n");
+        server_send_message(player_actual->socket, 4, "");
+        continue;
+      }else if(jugadores_listos < jugadores_conectados){
+        server_send_message(player_actual->socket, 2, "Faltan jugadores que esten listos\n");
+        server_send_message(player_actual->socket, 4, "");
+        continue;
+
       }
     }
 
@@ -173,6 +184,13 @@ int main(int argc, char *argv[]){
 			close(client_socket);
 			continue;
 		}
+    if (game_in_progress) {
+      printf("Se intentó conectar un jugador pero fue kickeado\n");
+      server_send_message(client_socket,0,"Game has already started.\nExiting...\n");
+      close(client_socket);
+      continue;
+    }
+
 		queue_add(client_socket);
     PlayerInfo* player = players_info[cli_count];
     cli_count++;

@@ -30,9 +30,10 @@ int main (int argc, char *argv[]){
   while (1){
     int msg_code = client_receive_id(server_socket);
 
+    // Cierres de conexión
     if (msg_code == 0) { 
       char * message = client_receive_payload(server_socket);
-      printf("%s", message);
+      printf("%s\n", message);
       printf("------------------\n");
       free(message);
       break;
@@ -89,7 +90,6 @@ int main (int argc, char *argv[]){
       printf("ID: %i\n", msg_code);
       printf("%s\n", message);
       printf("------------------\n");
-
     }
     
   }
