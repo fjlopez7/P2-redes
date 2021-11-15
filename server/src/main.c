@@ -161,7 +161,7 @@ int main(int argc, char *argv[]){
 		}
     if (game_in_progress) {
       printf("Se intentó conectar un jugador pero fue kickeado\n");
-      server_send_message(client_socket,5,"");
+      server_send_message(client_socket,0,"Game has already started.\nExiting...\n");
       close(client_socket);
       continue;
     }
