@@ -4,6 +4,7 @@ int client_receive_id(int client_socket){
   // Se obtiene solamente el ID del mensaje
   int id = 0;
   recv(client_socket, &id, 1, 0);
+  printf("");
   return id;
 }
 
@@ -19,7 +20,7 @@ char * client_receive_payload(int client_socket){
 }
 
 void client_send_message(int client_socket, int pkg_id, char * message){
-  printf("entré\n");
+  //printf("entré\n");
   int payloadSize = strlen(message) + 1; //+1 para considerar el caracter nulo. 
   //Esto solo es válido para strings, Ustedes cuando armen sus paquetes saben exactamente cuantos bytes tiene el payload.
   
@@ -29,6 +30,6 @@ void client_send_message(int client_socket, int pkg_id, char * message){
   msg[1] = payloadSize;
   memcpy(&msg[2], message, payloadSize);
   // Se envía el paquete
-  printf("client_socket: %i, msg: %s\n", client_socket, msg);
+  printf("client_socket: %i, msg: %s, payloadsize: %i\n", client_socket, msg, payloadSize);
   send(client_socket, msg, 2+payloadSize, 0);
 }

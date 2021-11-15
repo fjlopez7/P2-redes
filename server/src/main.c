@@ -52,7 +52,11 @@ int main(int argc, char *argv[]){
     int msg_code2 = -1;
     int msg_code3 = -1;
     int msg_code4 = -1;
+    if( jugador_actual == 1 ){
+      printf("entre a jugador actual == 1\n");
     
+    }
+
     if( jugador_actual == 2 ){
       printf("entre a jugador actual == 2\n");
       msg_code2 = server_receive_id(players_sockets->socket_c2);
@@ -72,7 +76,7 @@ int main(int argc, char *argv[]){
       printf("El tipo 1 se llama: %s\n", nombre);
       server_send_message(players_sockets->socket_c1, 2, "ahhhh");
     }
-    printf("2) msg_code2: %i\n", msg_code2);
+    
     if (msg_code2 == 1){
       printf("el tipo2 llego al msg_code2==1\n");
       char * nombre = server_receive_payload(players_sockets->socket_c2);
