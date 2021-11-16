@@ -13,7 +13,7 @@ static _Atomic unsigned int cli_count = 0;
 
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static int uid = 1;
+static int uid = 0;
 
 char * IP;
 int PORT = 8080;
@@ -59,19 +59,16 @@ void *handle_client(void* player){
     if (msg_code == 1){
       char * nombre = server_receive_payload(player_actual->socket);
       //Dice en el server los jugadores conectados
-      if (strlen(nombre) > 0){
-        strcpy(players_info[player_actual->uid]->name,nombre);
+      strcpy(players_info[player_actual->uid]->name,nombre);
         //printf("El jugador %i se llama: %s\n",player_actual->uid,player_actual->name);
         //Le avisa al lider los jugadores que se conectan
-        if (player_actual->uid > 0){
-          char mess2[90];
-          sprintf(mess2, "Se ha conectado el jugador: %s\n", player_actual->name);
-          server_send_message(players_info[0]->socket, 2, mess2);
-        }
-        server_send_message(player_actual->socket, 3, "");
-      }else{
-        server_send_message(player_actual->socket, 1, mess1);
+      if(player_actual->uid!=0){
+        char mess2[90];
+        sprintf(mess2, "Se ha conectado el jugador: %s\n", player_actual->name);
+        server_send_message(players_info[0]->socket, 2, mess2);
       }
+      
+      server_send_message(player_actual->socket, 3, "");
     }
     // Recibir aldeanos
     if (msg_code==3){
@@ -109,23 +106,7 @@ void *handle_client(void* player){
     if (msg_code==4 && player_actual->uid==0){
       char * respuesta = server_receive_payload(player_actual->socket);
       if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
-          printf("Va a comenzar el juego\n");
-          turno = 0; // setea el primer turno
-          break;
-      }else if(jugadores_conectados==1){
-        server_send_message(player_actual->socket, 2, "Faltan jugadores por conectarse\n");
-        server_send_message(player_actual->socket, 4, "");
-        continue;
-      }else if(jugadores_listos < jugadores_conectados){
-        server_send_message(player_actual->socket, 2, "Faltan jugadores que esten listos\n");
-        server_send_message(player_actual->socket, 4, "");
-        continue;
-      }
-    }
-
-    if (msg_code==4 && player_actual->uid==0){
-      char * respuesta = server_receive_payload(player_actual->socket);
-      if (jugadores_listos==jugadores_conectados && jugadores_conectados > 1){
+          printf("Va empezar el juego\n");
           game_in_progress = 1;
           for(int i=0; i< 4;i++){
             if(players_info[i]-> uid != -1){
@@ -154,7 +135,6 @@ void *handle_client(void* player){
     if (player_actual->uid==turno){
       //Se le asignan los recursos
       if(player_actual->first==1){
-        printf("First menu and distribution\n");
         add_resources(player_actual);
         server_send_message(player_actual->socket, 5, "");
         player_actual->first = 0;
@@ -195,11 +175,11 @@ void *handle_client(void* player){
           }
           char msg[256];
           if(j==1){
-            sprintf(msg,"%i1.%s\n",j,name1);
+            sprintf(msg,"%i1. %s\n",j,name1);
           }else if(j==2){
-            sprintf(msg,"%i1.%s\n2.%s\n",j,name1,name2);
+            sprintf(msg,"%i1. %s\n2. %s\n",j,name1,name2);
           }else if(j==3){
-            sprintf(msg,"%i1.%s\n2. %s\n3. %s\n",j,name1,name2,name3);
+            sprintf(msg,"%i1. %s\n2. %s\n3. %s\n",j,name1,name2,name3);
           }
           server_send_message(player_actual->socket, 8, msg);
         }
@@ -223,17 +203,43 @@ void *handle_client(void* player){
           }
           char msg[256];
           if(j==1){
-            sprintf(msg,"%i1.%s\n",j,name1);
+            sprintf(msg,"%i1. %s\n",j,name1);
           }else if(j==2){
-            sprintf(msg,"%i1.%s\n2.%s\n",j,name1,name2);
+            sprintf(msg,"%i1. %s\n2. %s\n",j,name1,name2);
           }else if(j==3){
-            sprintf(msg,"%i1.%s\n2. %s\n3. %s\n",j,name1,name2,name3);
+            sprintf(msg,"%i1. %s\n2. %s\n3. %s\n",j,name1,name2,name3);
           }
           server_send_message(player_actual->socket, 9, msg);
         }
         //quiere robar
         if (respuesta == 5){
-          server_send_message(player_actual->socket, 10, "");
+          int j = 0;
+          char name4[30], name5[30],name6[30];
+          for(int i= 0;i<jugadores_listos; i++){
+            if(players_info[i]->status == 1 && player_actual->uid!= players_info[i]->uid){
+              if(j == 0){
+                sprintf(name4, "%s", players_info[i]->name);
+              }
+              if(j==1){
+                sprintf(name5, "%s", players_info[i]->name);
+              }
+              if(j==2){
+                sprintf(name6, "%s", players_info[i]->name);
+              }
+              j++;
+            }
+          }
+          char msg[256];
+          if(j==1){
+            sprintf(msg,"%i1. %s\n",j,name4);
+          }else if(j==2){
+            sprintf(msg,"%i1. %s\n2. %s\n",j,name4,name5);
+          }else if(j==3){
+            sprintf(msg,"%i1. %s\n2. %s\n3. %s\n",j,name4,name5,name6);
+          }
+
+          server_send_message(player_actual->socket, 10, msg);
+
         }
         //quiere ver su info
         if (respuesta == 6){
@@ -322,6 +328,7 @@ void *handle_client(void* player){
         } 
         server_send_message(player_actual->socket, 5, "");
       }
+      
       //Subir nivel
       else if (msg_code == 7){
         char * aldeano = server_receive_payload(player_actual->socket);
@@ -336,6 +343,7 @@ void *handle_client(void* player){
         }
         server_send_message(player_actual->socket, 5, "");
       }
+
       //atacar aldea
       else if (msg_code == 8){
         char* messag = server_receive_payload(player_actual->socket);
@@ -379,6 +387,7 @@ void *handle_client(void* player){
           }
         server_send_message(player_actual->socket, 5, "");
       }
+
       //espiar
       else if (msg_code == 9){
         char * aldeano = server_receive_payload(player_actual->socket);
@@ -403,6 +412,7 @@ void *handle_client(void* player){
         }
         server_send_message(player_actual->socket, 5, "");
       }
+
       //robar
       else if (msg_code == 10){
         char * steal_msg = server_receive_payload(player_actual->socket);
@@ -433,10 +443,17 @@ void *handle_client(void* player){
           sprintf(victim_msg, "%s te ha robado %s!!!\n", player_actual->name, resource_msg);
           server_send_message(players_info[target_player]->socket, 2, victim_msg);
           char thief_msg[100];
-          sprintf(thief_msg, "Le has robado %s a %s!!!\n", resource_msg, player_actual->name);
+          sprintf(thief_msg, "Le has robado %s a %s!!!\n", resource_msg, players_info[target_player]->name);
           server_send_message(player_actual->socket, 2, thief_msg);
           
           // AGREGAR MENSAJES NOTIFICANDO AL RESTO DE PLAYERS
+          char notify_msg[100];
+          sprintf(notify_msg, "%s le ha robado %s a %s\n!", player_actual->name, resource_msg, players_info[target_player]->name);
+          for (int i = 0; i<jugadores_listos; i++) {
+            if (player_actual->uid != players_info[i]->uid && target_player != i) {
+              server_send_message(players_info[i]->socket, 2, notify_msg);
+            }
+          }
 
         }else if (can_steal == 0) {     
           // CIENCIA INSUFICIENTE
@@ -448,41 +465,9 @@ void *handle_client(void* player){
           // ERROR INPUT MATERIA
           server_send_message(player_actual->socket, 2, "Recurso a robar invalido!\n");
         }
-
+        server_send_message(player_actual->socket, 5, "");
       }
-      // else if (msg_code == 8){
-      //   char * msg = server_receive_payload(player_actual->socket);
-      //   int j_client= msg[0] - '0';
-      //   int j = 0;
-      //   int final_i = -1;
-      //   char name1[30], name2[30],name3[30];
-      //   for(int i= 0;i<jugadores_listos; i++){
-      //     if(players_info[i]->status == 1 && player_actual->uid!= players_info[i]->uid){
-      //       if(j_client==j){
-      //         final_i = i;
-      //       }
-      //       j++;
-      //     }
-      //   }
-      //   int ataque = attack(player_actual, players_info, final_i);
-      //   if (ataque==0){
-      //     server_send_message(players_info[final_i]->socket, 2, "GAME OVER: Haz sido atacado y perdiste\n");
-      //     server_send_message(player_actual->socket, 2, "Ataque fallido\n");
-      //   }
-      //   if (ataque==1){
-      //     server_send_message(players_info[final_i]->socket, 2, "GAME OVER: Haz sido atacado y perdiste\n");
-      //     server_send_message(player_actual->socket, 2, "Ataque exitoso\n");
-      //   }
-      //   char msg[90];
-      //   sprintf(msg,"%s ha atacado a %s\n",player_actual->name, players_info[final_i]->name);
 
-      //   for(int i= 0;i<jugadores_listos; i++){
-      //       if(players_info[i]->status == 1 && player_actual->uid!= players_info[i]->uid && final_i!=i ){
-      //         server_send_message(players_info[final_i]->socket, 2, "\n");
-      //       }
-      //     }
-      //   server_send_message(player_actual->socket, 5, "");
-      // }
       //pasar
       else if (msg_code == 12){
         char * tipo_aldeano = server_receive_payload(player_actual->socket);
@@ -508,18 +493,44 @@ void *handle_client(void* player){
       }
       //rendirse
       else if (msg_code == 13){
-        // char * tipo_aldeano = server_receive_payload(player_actual->socket);
-        // int num_aldeano = tipo_aldeano[0] - '0';
-        // create_villager(player_actual, num_aldeano);
-        // for(int i= 0;i<jugadores_listos; i++){
-        //     if(players_info[i]->status == 1){
-        //       server_send_message(players_info[final_i]->socket, 2, msgresp);
-        //       if(lose==1){
-        //         server_send_message(players_info[final_i]->socket, 2, msg1);
-        //       }
-        //     }
-            
-        // }
+        
+        printf("Jugador %s se rinde\n", player_actual->name);
+        player_actual->status = 0;
+        player_actual->ciencia = 0;
+        player_actual->comida = 0;
+        player_actual->oro = 0;
+        player_actual->agr = 0;
+        player_actual->gue = 0;
+        player_actual->ing = 0;
+        player_actual->min = 0;
+        player_actual->uid = -1;
+        player_actual -> first = 0;
+        player_actual -> niv_agr = 1;
+        player_actual -> niv_atq = 1;
+        player_actual -> niv_def = 1;
+        player_actual -> niv_ing = 1;
+        player_actual -> niv_min = 1;
+        //cambia el turno 
+        int next = -1;
+        for(int i=turno+1; i<jugadores_listos; i++){
+          if (players_info[i]->status == 1){
+            next = i;
+            break;
+          }  
+        }
+        if(next == -1){
+          for(int i=0; i<jugadores_listos; i++){
+            if (players_info[i]->status == 1){
+              next = i;
+              break;
+            }  
+          }
+        }
+        turno = players_info[next]->uid;
+        printf("turno asigando: %i\n", turno);
+        player_actual->first = 1;
+        //destruye al mono
+        server_send_message(player_actual->socket, 0, "Game over\n"); 
       }
       //volver
       else if( msg_code == 18){
@@ -532,7 +543,6 @@ void *handle_client(void* player){
     }
   }
   pthread_detach(pthread_self());
-
 	return NULL;
 }
 
