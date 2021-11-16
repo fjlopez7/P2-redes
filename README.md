@@ -1,4 +1,4 @@
-#Proyecto 2
+# Proyecto 2
 
 _Proyecto 2: Sistemas Operativos y Redes_
 
