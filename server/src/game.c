@@ -18,6 +18,7 @@ PlayerInfo* init_player_info(){
     player_info -> min = 0;
     player_info -> uid = -1;
     player_info -> status = 1; //1: vivo, 0: muerto
+    player_info -> first = 1;
     player_info -> aldeanos_initial = 9;
     return player_info;
 }
@@ -80,21 +81,21 @@ int create_villager(PlayerInfo* player_info, int type){
         player_info->comida -= comida_necesaria;
         // Agricultor
         if(type == 1){
-            players_info->agr++;
+            player_info->agr++;
         // Minero
         } else if(type == 2){
-             players_info->min++;
+             player_info->min++;
         // Ingeniero
         } else if(type == 3){
-             players_info->ing++;
+             player_info->ing++;
         // Guerrero
         } else if(type == 4){
-             players_info->gue++;
+             player_info->gue++;
         }
-        return 1
+        return 1;
     // No cuenta con los recursos necesarios
     } else {
-        return 0
+        return 0;
     }
 }
 
@@ -135,16 +136,16 @@ int level_up(PlayerInfo* player_info, int type){
         player_info->ciencia -= recurso_necesario;
         // Agricultor
         if(type == 1){
-            players_info->niv_agr++;
+            player_info->niv_agr++;
         // Minero
         } else if(type == 2){
-             players_info->niv_min++;
+             player_info->niv_min++;
         // Ingeniero
         } else if(type == 3){
-             players_info->niv_ing++;
+             player_info->niv_ing++;
         // Guerrero
         } else if(type == 4){
-             players_info->niv_atq++;
+             player_info->niv_atq++;
         // Defensa
         } else if(type == 5){
             player_info->niv_def++;
@@ -152,7 +153,7 @@ int level_up(PlayerInfo* player_info, int type){
         return nivel_actual + 1;
     // No cuenta con los recursos necesarios
     } else {
-        return 0
+        return 0;
     }
 }
 
