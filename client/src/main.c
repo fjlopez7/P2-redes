@@ -82,7 +82,7 @@ int main (int argc, char *argv[]){
       //printf("%s\n",message);
       free(message);
   
-      printf("Reparte tus 9 aldeanos en los 4 roles Agicultores-Mineros-Ingenieros-Guerreros:\n");
+      printf("Reparte tus 9 aldeanos en los 4 roles Agricultores-Mineros-Ingenieros-Guerreros:\n");
       // los ingresa como: 3312 por ejemplo
       char * response = get_input();
       printf("------------------\n");
@@ -205,7 +205,7 @@ int main (int argc, char *argv[]){
       memmove(message, message+1, strlen(message));
       printf("--------Atacar--------\n");
       printf("%s",message);
-      printf("%i. Volver\n",j+2);
+      printf("%i. Volver\n",j+1);
       free(message);
       int option = getchar() - '0';
       getchar();
@@ -217,7 +217,7 @@ int main (int argc, char *argv[]){
         }else if(option==3){
           client_send_message(server_socket, 8, "2");
         }
-      }else if(option == j+2){
+      }else if(option == j+1){
         client_send_message(server_socket, 18, "");
       }else{
         client_send_message(server_socket, 5, "3");
@@ -230,7 +230,7 @@ int main (int argc, char *argv[]){
       memmove(message, message+1, strlen(message));
       printf("--------Espiar--------\n");
       printf("%s",message);
-      printf("%i. Volver\n",j+2);
+      printf("%i. Volver\n",j+1);
       free(message);
       int option = getchar() - '0';
       getchar();
@@ -242,10 +242,61 @@ int main (int argc, char *argv[]){
         }else if(option==3){
           client_send_message(server_socket, 9, "3");
         }
-      }else if(option == j+2){
+      }else if(option == j+1){
         client_send_message(server_socket, 18, "");
       }else{
-        client_send_message(server_socket, 5, "3");
+        client_send_message(server_socket, 5, "4");
+      }
+      printf("------------------------------------\n");
+    }
+    else if(msg_code == 10){ // Robar
+      char * message = client_receive_payload(server_socket);
+      int j = message[0] - '0';
+      memmove(message, message+1, strlen(message));
+      printf("--------Robar--------\n");
+      printf("%s",message);
+      printf("%i. Volver\n",j+1);
+      free(message);
+      int option = getchar() - '0';
+      getchar();
+      printf("--------Robar material--------\n");
+      printf("1. Comida\n");
+      printf("2. Oro\n");
+      printf("3. Volver\n");
+      
+      int option1 = getchar() - '0';
+      getchar();
+      if(option<(j+1)){
+        if(option==1){
+          if(option1==1){
+            client_send_message(server_socket, 10, "01");
+          }else if(option1==2){
+            client_send_message(server_socket, 10, "02");
+          }else{
+            client_send_message(server_socket, 18, "");
+          }
+          
+        }else if(option==2){
+          if(option1==1){
+            client_send_message(server_socket, 10, "11");
+          }else if(option1==2){
+            client_send_message(server_socket, 10, "12");
+          }else{
+            client_send_message(server_socket, 18, "");
+          }
+        }else if(option==3){
+          if(option1==1){
+            client_send_message(server_socket, 10, "21");
+          }else if(option1==2){
+            client_send_message(server_socket, 10, "22");
+          }else{
+            client_send_message(server_socket, 18, "");
+          }
+        }
+      }else if(option == j+1){
+        client_send_message(server_socket, 18, "");
+      }else{
+        client_send_message(server_socket, 5, "5");
       }
       printf("------------------------------------\n");
     }
