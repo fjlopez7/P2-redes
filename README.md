@@ -4,6 +4,7 @@ _Proyecto 2: Sistemas Operativos y Redes_
 
 ### Integrantes 
 
+
 _Tiare Sagredo --> Número de alumno: 17638674_
 
 _Trigal Esquivel --> Número de alumno: 17642310_
@@ -13,6 +14,7 @@ _Francisco Lopez --> Número de alumno: 17637155_
 _Juan Galilea --> Número de alumno: 15621375_
 
 _Benjamin Lobos --> Número de alumno: 17641349_
+
 
 ### Comandos útiles:
 
